@@ -1,76 +1,82 @@
-/*
-A child is playing with a ball on the nth floor of a tall building.
-The height of this floor, h, is known. He drops the ball out of the
-window. The ball bounces (for example), to two-thirds of its height
-(a bounce of 0.66).
-
-His mother looks out of a window 1.5 meters from the ground.
-
-How many times will the mother see the ball pass in front of her
-window (including when it's falling and bouncing?
-
-Three conditions must be met for a valid experiment:
-
-    Float parameter "h" in meters must be greater than 0
-    Float parameter "bounce" must be greater than 0 and less than 1
-    Float parameter "window" must be less than h.
-
-If all three conditions above are fulfilled, return a positive integer, otherwise return -1.
-
-Note:
-
-    The ball can only be seen if the height of the rebounding ball is strictly greater than the window parameter.
-        Example:
-	    - h = 3, bounce = 0.66, window = 1.5, result is 3
-	    - h = 3, bounce = 1, window = 1.5, result is -1
-
-	    (Condition 2) not fulfilled)
-
-*/
-
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"math"
+)
 
-func bball(hfloor, a, hwin float64) int {
-
+func BouncingBall(hfloor, a, hwindow float64) int {
 	/*
-	   assuming the bounce height on bounce n is a * bounce height
-	   on bounce n-1
+		hfloor is height of the floor from which ball is dropped
+		hwindow	is height of window with observer - looking for bounces
+		a is the bounce factor - and it must be < 1
+
+		after looking at a few examples will realize that generally are looking for
+		n where
+
+		a^n <= hwindow/hfloor
+
+		This can be solved w/logs:
+
+		n <= log-a(r); r = hwindow/hfloor, log-w = log base w
+
+		but, math packages probably don't have the ability to solve
+		logs in arbitrary bases.  So, using the conversion of bases
+		trick (which I totally didn't remember - had to google)
+		you can solve it:
+
+		log-b(x) = log-bb(x) / log-bb(b); log-w = log with base w
+
 	*/
 
-	// first check that hfloor is > hwin - i.e. kid not dropping ball from
-	// lower floor
+	// check for invalid params
+	if hfloor > hwindow && hfloor > 0 && a > 0 && a < 1 {
 
-	if a >= 1 {
-		return -1
-	} else if hfloor > hwin {  // dropping from higher floor whan window - proceed
+		r := hwindow/hfloor
 
-		// let's brute force this first
+		n := math.Log10(r)/math.Log10(a)
 
-		count := 1            // must see it on the way down at least
-		r := hwin / hfloor  // just making things a littler easier to write
+		if math.Floor(n) == n {  // bounced exactly to window - which doesn't count according to the constraints given
 
-		bheight := a * hfloor // get the first bounce height
+			n--  // account for one too many bounces then
 
-		for bheight > hwin {  // this is go's while loop syntax - ick - b/c we already have first bounce ht, this will fall through if that's not as high as the window
-
-			bheight *= a  // new bounce height is a * last one
-
-			count += 2
 		}
 
-		return count
+		return 2 * int(math.Floor(n)) + 1
 
-	} else { // kid dropping from same or lower floor, won't ever be seen
+
+	} else {  // 1+ invalid params
+
 		return -1
 	}
 }
 
-func main(){
+func main() {
+	/*
+			testequal(3, 0.66, 1.5, 3)
+		      testequal(40, 0.4, 10, 3)
+		      testequal(10, 0.6, 10, -1)
+		      testequal(40, 1, 10, -1)
+		      testequal(5, -1, 1.5, -1)
+	*/
 
-	// - h = 3, bounce = 0.66, window = 1.5, result is 3
-	fmt.Println(bball(3, 0.66, 1.5))
-	// - h = 3, bounce = 1, window = 1.5, result is -1
-	fmt.Println(bball(3, 1, 1.5))
+
+	fmt.Println(BouncingBall(3, 0.66, 1.5))
+	fmt.Println(BouncingBall(40, 0.4, 10))
+	fmt.Println(BouncingBall(10, 0.6, 10))
+	fmt.Println(BouncingBall(40, 1, 10))
+	fmt.Println(BouncingBall(5, -1, 1.5))
+	fmt.Println(BouncingBall(2, 0.25, 1))
+	fmt.Println(BouncingBall(2, 0.5, 1))
+
+	// now some random tests
+	//r :=rand.New(rand.NewSource(19700920))
+	//for i := 1; i < 100; i++ {
+	//
+	//	f := 100 * r.Float64()
+	//	w := 80 * r.Float64()
+	//	a := 3 * r.Float64() - 1.5
+	//
+	//	fmt.Println(BouncingBall(f, a, w))
+	//}
 }
